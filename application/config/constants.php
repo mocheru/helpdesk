@@ -89,5 +89,7 @@ define('DBERP', 'db_harpan');
 define('DBACC', 'db_harapan_gl');
 define('FILE_ALLOW', 'doc|docx|xls|xlsx|ppt|pptx|7z|zip|rar|jpeg|jpg|gif|bmp|png');
 
-defined('RECAPTCHA_SITE_KEY') or define('RECAPTCHA_SITE_KEY', '6LeOCKwrAAAAAFLCpcE_ZUic219GFHrCqYLsIYyN');
-defined('RECAPTCHA_SECRET_KEY') or define('RECAPTCHA_SECRET_KEY', '6LeOCKwrAAAAAKYNBLFlGuvqaCc6GnFQKvlpovlM');
+// defined('RECAPTCHA_SITE_KEY') or define('RECAPTCHA_SITE_KEY', '6LeOCKwrAAAAAFLCpcE_ZUic219GFHrCqYLsIYyN');
+// defined('RECAPTCHA_SECRET_KEY') or define('RECAPTCHA_SECRET_KEY', '6LeOCKwrAAAAAKYNBLFlGuvqaCc6GnFQKvlpovlM');
+defined('RECAPTCHA_SITE_KEY')   or define('RECAPTCHA_SITE_KEY',   '6LfRy6ErAAAAAIh8BomRhCz8Y4iOyR8OIm95qOwA');
+defined('RECAPTCHA_SECRET_KEY') or define('RECAPTCHA_SECRET_KEY', '6LfRy6ErAAAAALA6QN1Gwd8HtnyR0ljIOZuK023B');
