@@ -340,6 +340,11 @@ $ENABLE_DELETE  = has_permission('Ticket.Delete');
 	.swal2-container {
 		z-index: 3000 !important;
 	}
+
+	#chatMessages {
+		background-color: #e5f2ff;
+		background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%2347a8ff' fill-opacity='0.05' fill-rule='evenodd'/%3E%3C/svg%3E");
+	}
 </style>
 
 <!-- Berry Card -->
@@ -451,16 +456,17 @@ $ENABLE_DELETE  = has_permission('Ticket.Delete');
 <!-- Modal Chat Room -->
 <div class="modal fade" id="modalChatRoom" tabindex="-1" aria-labelledby="modalChatLabel" aria-hidden="true" data-bs-backdrop="static">
 	<div class="modal-dialog modal-lg modal-dialog-scrollable">
-		<div class="modal-content">
-			<div class="modal-header bg-primary text-white">
+		<div class="modal-content d-flex flex-column" style="height: 90vh; max-height: 700px;">
+			<div class="modal-header bg-primary text-white flex-shrink-0">
 				<h5 class="modal-title text-white" id="modalChatLabel">
 					<i class="fa-solid fa-comments"></i> Chat Room - Ticket: <span id="chatTicketNo"></span>
 				</h5>
 				<button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
 			</div>
-			<div class="modal-body p-0" style="height: 500px; display: flex; flex-direction: column;">
+			
+			<div class="modal-body p-0 d-flex flex-column flex-grow-1">
 				<!-- Chat Messages Container -->
-				<div id="chatMessages" class="flex-grow-1 p-3" style="overflow-y: auto; background: #f5f5f5;">
+				<div id="chatMessages" class="flex-grow-1 p-3" style="overflow-y: auto;">
 					<div id="chatLoading" class="text-center py-5">
 						<i class="fa-solid fa-spinner fa-spin fa-2x text-primary"></i>
 						<p class="mt-2">Loading chat...</p>
@@ -469,8 +475,8 @@ $ENABLE_DELETE  = has_permission('Ticket.Delete');
 					<div id="chatMessagesContent"></div>
 				</div>
 
-				<!-- Chat Input -->
-				<div class="border-top p-3 bg-white">
+				<!-- Chat Input - Sticky Bottom -->
+				<div class="border-top p-3 bg-white flex-shrink-0" style="position: sticky; bottom: 0; z-index: 10;">
 					<form id="chatForm" enctype="multipart/form-data">
 						<input type="hidden" id="chatHelpdeskId" name="helpdesk_id">
 
@@ -1140,7 +1146,7 @@ $ENABLE_DELETE  = has_permission('Ticket.Delete');
 			success: function(response) {
 				$('#chatLoading').hide();
 
-				if (response.status == 1) {
+				if (response.status == 1 && response.data && response.data.length > 0) {
 					const isFirstLoad = $('#chatMessagesContent').children().length === 0;
 					const hasNewMessages = response.data.length > $('#chatMessagesContent').children().length;
 
@@ -1161,9 +1167,11 @@ $ENABLE_DELETE  = has_permission('Ticket.Delete');
 					}
 				} else {
 					$('#chatMessagesContent').html(
-						'<div class="text-center text-muted py-4">' +
+						'<div class="d-flex align-items-center justify-content-center" style="height: 100%; min-height: 400px;">' +
+						'<div class="text-center text-muted">' +
 						'<i class="fa-solid fa-comments fa-3x mb-3"></i>' +
 						'<p>Belum ada pesan. Mulai percakapan!</p>' +
+						'</div>' +
 						'</div>'
 					).show();
 				}
@@ -1549,85 +1557,85 @@ $ENABLE_DELETE  = has_permission('Ticket.Delete');
 		});
 
 		$('#chatForm').on('submit', function(e) {
-    e.preventDefault();
+			e.preventDefault();
 
-    const message = $('#chatMessage').val().trim();
-    const hasFile = $('#chatFile')[0].files.length > 0;
+			const message = $('#chatMessage').val().trim();
+			const hasFile = $('#chatFile')[0].files.length > 0;
 
-    if (!message && !hasFile) {
-        Swal.fire({
-            icon: 'warning',
-            title: 'Pesan kosong',
-            text: 'Silakan ketik pesan atau lampirkan file',
-        });
-        return;
-    }
+			if (!message && !hasFile) {
+				Swal.fire({
+					icon: 'warning',
+					title: 'Pesan kosong',
+					text: 'Silakan ketik pesan atau lampirkan file',
+				});
+				return;
+			}
 
-    if (hasFile) {
-        const file = $('#chatFile')[0].files[0];
-        const maxSize = 2 * 1024 * 1024; // Ubah menjadi 2MB
+			if (hasFile) {
+				const file = $('#chatFile')[0].files[0];
+				const maxSize = 2 * 1024 * 1024; // Ubah menjadi 2MB
 
-        if (file.size > maxSize) {
-            Swal.fire({
-                icon: 'error',
-                title: 'File terlalu besar',
-                text: 'Ukuran maksimal file adalah 2 MB', // Update pesan
-                confirmButtonText: 'OK'
-            });
-            return;
-        }
-    }
+				if (file.size > maxSize) {
+					Swal.fire({
+						icon: 'error',
+						title: 'File terlalu besar',
+						text: 'Ukuran maksimal file adalah 2 MB', // Update pesan
+						confirmButtonText: 'OK'
+					});
+					return;
+				}
+			}
 
-    const formData = new FormData(this);
+			const formData = new FormData(this);
 
-    $.ajax({
-        url: siteurl + active_controller + 'send_chat_message',
-        type: 'POST',
-        data: formData,
-        processData: false,
-        contentType: false,
-        dataType: 'json',
-        beforeSend: function() {
-            $('#btnSendChat').prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i>');
-        },
-        success: function(response) {
-            if (response.status == 1) {
-                $('#chatMessage').val('');
-                $('#chatFile').val('');
-                $('#filePreview').hide();
+			$.ajax({
+				url: siteurl + active_controller + 'send_chat_message',
+				type: 'POST',
+				data: formData,
+				processData: false,
+				contentType: false,
+				dataType: 'json',
+				beforeSend: function() {
+					$('#btnSendChat').prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i>');
+				},
+				success: function(response) {
+					if (response.status == 1) {
+						$('#chatMessage').val('');
+						$('#chatFile').val('');
+						$('#filePreview').hide();
 
-                shouldAutoScroll = true;
-                userHasScrolledUp = false;
+						shouldAutoScroll = true;
+						userHasScrolledUp = false;
 
-                loadChatMessages(currentHelpdeskId, true);
-            } else {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Gagal',
-                    text: response.message,
-                    confirmButtonText: 'OK'
-                });
-            }
-        },
-        error: function(xhr, status, error) {
-            let errorMessage = 'Terjadi kesalahan saat mengirim pesan';
+						loadChatMessages(currentHelpdeskId, true);
+					} else {
+						Swal.fire({
+							icon: 'error',
+							title: 'Gagal',
+							text: response.message,
+							confirmButtonText: 'OK'
+						});
+					}
+				},
+				error: function(xhr, status, error) {
+					let errorMessage = 'Terjadi kesalahan saat mengirim pesan';
 
-            if (xhr.responseJSON && xhr.responseJSON.message) {
-                errorMessage = xhr.responseJSON.message;
-            }
+					if (xhr.responseJSON && xhr.responseJSON.message) {
+						errorMessage = xhr.responseJSON.message;
+					}
 
-            Swal.fire({
-                icon: 'error',
-                title: 'Error!',
-                text: errorMessage,
-                confirmButtonText: 'OK'
-            });
-        },
-        complete: function() {
-            $('#btnSendChat').prop('disabled', false).html('<i class="fa-solid fa-paper-plane"></i> Send');
-        }
-    });
-});
+					Swal.fire({
+						icon: 'error',
+						title: 'Error!',
+						text: errorMessage,
+						confirmButtonText: 'OK'
+					});
+				},
+				complete: function() {
+					$('#btnSendChat').prop('disabled', false).html('<i class="fa-solid fa-paper-plane"></i> Send');
+				}
+			});
+		});
 
 		let scrollTimeout;
 		$('#chatMessages').on('scroll', function() {

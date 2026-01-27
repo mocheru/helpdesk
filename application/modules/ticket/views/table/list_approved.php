@@ -19,7 +19,7 @@ $ENABLE_VIEW = has_permission('Ticket.View');
                 <th style="min-width: 150px;">Approved By</th>
                 <th style="min-width: 120px;">Approval Date</th>
                 <?php if ($ENABLE_VIEW): ?>
-                    <th style="min-width: 80px;" class="text-center">Action</th>
+                    <th style="min-width: 120px;" class="text-center">Action</th>
                 <?php endif; ?>
             </tr>
         </thead>
@@ -141,6 +141,28 @@ $ENABLE_VIEW = has_permission('Ticket.View');
                         </td>
                         <?php if ($ENABLE_VIEW): ?>
                             <td class="text-center">
+                                 <?php
+                                $unread_count = isset($unread_counts[$row['id']]) ? $unread_counts[$row['id']] : 0;
+                                ?>
+
+                                <button type="button"
+                                    class="btn btn-primary btn-sm px-2 py-1 open-chat position-relative"
+                                    data-id="<?= $row['id'] ?>"
+                                    data-ticket="<?= $row['no_ticket'] ?>"
+                                    title="Chat Room">
+                                    <i class="fa-solid fa-comments"></i>
+                                    <?php if ($unread_count > 0): ?>
+                                        <span class="chat-unread-badge-<?= $row['id'] ?> position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                                            style="font-size: 9px; padding: 2px 5px;">
+                                            <?= $unread_count > 99 ? '99+' : $unread_count ?>
+                                        </span>
+                                    <?php else: ?>
+                                        <span class="chat-unread-badge-<?= $row['id'] ?> position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                                            style="display: none; font-size: 9px; padding: 2px 5px;">
+                                            0
+                                        </span>
+                                    <?php endif; ?>
+                                </button>
                                 <button type="button"
                                     class="btn btn-secondary btn-sm px-2 py-1 view-history"
                                     data-id="<?= $row['id'] ?>"
