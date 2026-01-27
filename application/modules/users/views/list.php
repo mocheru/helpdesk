@@ -226,6 +226,18 @@
 					// Initialize tooltips
 					const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
 					tooltipTriggerList.forEach((el) => new bootstrap.Tooltip(el));
+
+					if ($.fn.DataTable.isDataTable('#user-table')) {
+						$('#user-table').DataTable().destroy();
+					}
+
+					$('#user-table').DataTable({
+						paging: true,
+						searching: true,
+						order: [],
+						info: true,
+						responsive: true,
+					});
 				},
 				error: function(xhr, status, error) {
 					$('#skeleton-loading').hide();

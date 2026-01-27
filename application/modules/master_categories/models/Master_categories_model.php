@@ -18,7 +18,7 @@ class Master_categories_model extends BF_Model
     }
 
     // ==================== SUB CATEGORY MODEL FUNCTIONS ====================
-    
+
     public function get_all_category()
     {
         $this->db->from('helpdesk_category');
@@ -74,6 +74,15 @@ class Master_categories_model extends BF_Model
         $this->db->where('is_delete', 0);
         $this->db->order_by('id', 'ASC');
         return $this->db->get()->result();
+    }
+
+    public function get_sub_category_by_id($id_category)
+    {
+        $this->db->from('helpdesk_sub_category');
+        $this->db->where('id_category', $id_category);
+        $this->db->where('is_delete', 0);
+        $this->db->order_by('id', 'ASC');
+        return $this->db->get()->row();
     }
 
     public function count_sub_category($id_category)

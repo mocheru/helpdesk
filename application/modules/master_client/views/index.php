@@ -182,6 +182,18 @@ $ENABLE_DELETE  = has_permission('Master_client.Delete');
 			success: function(response) {
 				$('#skeleton-loading').hide();
 				$('#client-content').html(response).fadeIn();
+
+				if ($.fn.DataTable.isDataTable('#table_client')) {
+					$('#table_client').DataTable().destroy();
+				}
+
+				$('#table_client').DataTable({
+					paging: true,
+					searching: true,
+					order: [],
+					info: true,
+					responsive: true,
+				});
 			},
 			error: function() {
 				$('#skeleton-loading').hide();

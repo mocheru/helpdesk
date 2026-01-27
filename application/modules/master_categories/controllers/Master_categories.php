@@ -325,7 +325,6 @@ class Master_categories extends Admin_Controller
       $sub_name = $this->input->post('sub_name');
       $remark   = $this->input->post('remark');
 
-      // Validasi
       if (empty($sub_name)) {
         echo json_encode([
           'status'  => 0,
@@ -334,7 +333,6 @@ class Master_categories extends Admin_Controller
         return;
       }
 
-      // Ambil data sub kategori saat ini
       $current_sub = $this->Master_categories_model->get_sub_category_by_id($id);
 
       if (!$current_sub) {
@@ -345,7 +343,6 @@ class Master_categories extends Admin_Controller
         return;
       }
 
-      // Cek duplikat dalam kategori yang sama (kecuali data ini sendiri)
       if ($this->Master_categories_model->check_sub_category_exists(
         $current_sub->id_category,
         $sub_name,
@@ -361,7 +358,6 @@ class Master_categories extends Admin_Controller
       $data = [
         'sub_name'     => $sub_name,
         'remark'       => $remark,
-        // Field update (disarankan, bukan create_*)
         'update_date'  => $this->datetime,
         'update_by_id' => $this->id_user,
         'update_by'    => $this->session->app_session['nm_lengkap'],

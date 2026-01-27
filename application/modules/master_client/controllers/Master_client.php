@@ -108,7 +108,6 @@ class Master_client extends Admin_Controller
       $name_app = $this->input->post('name_app');
       $remark = $this->input->post('remark');
 
-      // Validasi
       if (empty($name_app)) {
         echo json_encode([
           'status'  => 0,
@@ -117,7 +116,6 @@ class Master_client extends Admin_Controller
         return;
       }
 
-      // Cek duplikat (kecuali data yang sedang diedit)
       if ($this->Master_client_model->check_client_exists($name_app, $id)) {
         echo json_encode([
           'status'  => 0,

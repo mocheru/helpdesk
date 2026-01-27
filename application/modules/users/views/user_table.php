@@ -1,6 +1,6 @@
 <?php if (!empty($users)) : ?>
     <div class="table-responsive">
-        <table class="table table-striped table-hover align-middle w-100">
+        <table id="user-table" class="table table-striped table-hover align-middle w-100">
             <thead class="table-light">
                 <tr>
                     <th style="width:60px;">#</th>
