@@ -966,6 +966,11 @@ $ENABLE_DELETE  = has_permission('Ticket.Delete');
 				icon: 'fa-lock',
 				text: 'Closed',
 				color: '#6c757d'
+			},
+			7: {
+				icon: 'fa-edit',
+				text: 'Data Updated',
+				color: '#ff00d9'
 			}
 		};
 

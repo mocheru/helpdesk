@@ -56,7 +56,9 @@ class Setting extends Admin_Controller
     public function get_data()
     {
         $this->auth->restrict($this->viewPermission);
-        $users = $this->users_model->get_users_with_client_apps();
+        $filter_type = $this->input->get('filter_type') ?? 'all';
+
+        $users = $this->users_model->get_users_with_client_apps($filter_type);
 
         $data = [
             'users' => $users,
@@ -382,82 +384,82 @@ class Setting extends Admin_Controller
     }
 
     public function permission($id = 0)
-{
-    $this->auth->restrict($this->managePermission);
+    {
+        $this->auth->restrict($this->managePermission);
 
-    if ($id == 0 || is_numeric($id) == FALSE || $id == 1) {
-        $this->template->set_message(lang('users_invalid_id'), 'error');
-        redirect('users/setting');
-    }
-
-    if (isset($_POST['save'])) {
-        if ($this->save_permission($id)) {
-            $this->template->set_message(lang('users_permission_edit_success'), 'success');
-        }
-    }
-
-    // User data
-    $data = $this->users_model->find($id);
-
-    if ($data) {
-        if ($data->deleted == 1) {
-            $this->template->set_message(lang('users_already_deleted'), 'error');
+        if ($id == 0 || is_numeric($id) == FALSE || $id == 1) {
+            $this->template->set_message(lang('users_invalid_id'), 'error');
             redirect('users/setting');
         }
+
+        if (isset($_POST['save'])) {
+            if ($this->save_permission($id)) {
+                $this->template->set_message(lang('users_permission_edit_success'), 'success');
+            }
+        }
+
+        // User data
+        $data = $this->users_model->find($id);
+
+        if ($data) {
+            if ($data->deleted == 1) {
+                $this->template->set_message(lang('users_already_deleted'), 'error');
+                redirect('users/setting');
+            }
+        }
+
+        // Get all menus (parent menus)
+        $permissions_menu = $this->db->select('id, title as nama_menu, parent_id')
+            ->from('menus')
+            ->where('parent_id', 0)
+            ->order_by('title', 'ASC')
+            ->get()
+            ->result_array();
+
+        // Get submenu/child menus
+        $ArrPermissionDetail = array();
+        $submenus = $this->db->select('id, title as nama_menu, parent_id')
+            ->from('menus')
+            ->where('parent_id >', 0)
+            ->order_by('parent_id, title', 'ASC')
+            ->get()
+            ->result_array();
+
+        foreach ($submenus as $submenu) {
+            $ArrPermissionDetail[$submenu['parent_id']][] = $submenu;
+        }
+
+        // Get all permissions with actions
+        $all_permissions = $this->db->select('id_permission, nm_permission, id_menu, nm_menu')
+            ->from('permissions')
+            ->order_by('id_menu, nm_permission', 'ASC')
+            ->get()
+            ->result_array();
+
+        // Group permissions by menu_id
+        $ArrActionPers = array();
+        foreach ($all_permissions as $perm) {
+            $ArrActionPers[$perm['id_menu']][] = array(
+                'id_permission' => $perm['id_permission'],
+                'nm_permission' => $perm['nm_permission'],
+                'nm_menu' => $perm['nm_menu']
+            );
+        }
+
+        // Get user's authorized permissions (from role and user)
+        $auth_permissions = $this->get_auth_permission($id);
+
+        // Send data to view
+        $this->template->set('data', $data);
+        $this->template->set('permissions', $permissions_menu);
+        $this->template->set('ArrPermissionDetail', $ArrPermissionDetail);
+        $this->template->set('ArrActionPers', $ArrActionPers);
+        $this->template->set('auth_permissions', $auth_permissions);
+
+        $this->template->title(lang('users_edit_perm_title'));
+        $this->template->page_icon('fa fa-shield');
+        $this->template->render('user_permissions');
     }
-
-    // Get all menus (parent menus)
-    $permissions_menu = $this->db->select('id, title as nama_menu, parent_id')
-                                 ->from('menus')
-                                 ->where('parent_id', 0)
-                                 ->order_by('title', 'ASC')
-                                 ->get()
-                                 ->result_array();
-
-    // Get submenu/child menus
-    $ArrPermissionDetail = array();
-    $submenus = $this->db->select('id, title as nama_menu, parent_id')
-                         ->from('menus')
-                         ->where('parent_id >', 0)
-                         ->order_by('parent_id, title', 'ASC')
-                         ->get()
-                         ->result_array();
-    
-    foreach ($submenus as $submenu) {
-        $ArrPermissionDetail[$submenu['parent_id']][] = $submenu;
-    }
-
-    // Get all permissions with actions
-    $all_permissions = $this->db->select('id_permission, nm_permission, id_menu, nm_menu')
-                                ->from('permissions')
-                                ->order_by('id_menu, nm_permission', 'ASC')
-                                ->get()
-                                ->result_array();
-
-    // Group permissions by menu_id
-    $ArrActionPers = array();
-    foreach ($all_permissions as $perm) {
-        $ArrActionPers[$perm['id_menu']][] = array(
-            'id_permission' => $perm['id_permission'],
-            'nm_permission' => $perm['nm_permission'],
-            'nm_menu' => $perm['nm_menu']
-        );
-    }
-
-    // Get user's authorized permissions (from role and user)
-    $auth_permissions = $this->get_auth_permission($id);
-
-    // Send data to view
-    $this->template->set('data', $data);
-    $this->template->set('permissions', $permissions_menu);
-    $this->template->set('ArrPermissionDetail', $ArrPermissionDetail);
-    $this->template->set('ArrActionPers', $ArrActionPers);
-    $this->template->set('auth_permissions', $auth_permissions);
-
-    $this->template->title(lang('users_edit_perm_title'));
-    $this->template->page_icon('fa fa-shield');
-    $this->template->render('user_permissions');
-}
 
     protected function save_permission($id_user = 0)
     {

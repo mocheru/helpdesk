@@ -65,11 +65,30 @@ class Users_model extends BF_Model
         parent::__construct();
     }
 
-    public function get_users_with_client_apps()
+    // public function get_users_with_client_apps()
+    // {
+    //     return $this->db
+    //         ->select("users.*, 
+    //              GROUP_CONCAT(helpdesk_client.name_app SEPARATOR ', ') as client_apps")
+    //         ->from('users')
+    //         ->join('helpdesk_user_client', 'helpdesk_user_client.id_user = users.id_user', 'left')
+    //         ->join(
+    //             'helpdesk_client',
+    //             'helpdesk_client.id = helpdesk_user_client.client_id AND helpdesk_client.is_delete = 0',
+    //             'left'
+    //         )
+    //         ->where('users.deleted', 0)
+    //         ->where('users.username !=', 'json')
+    //         ->group_by('users.id_user')
+    //         ->order_by('users.nm_lengkap', 'ASC')
+    //         ->get()
+    //         ->result_array();
+    // }
+
+    public function get_users_with_client_apps($filter_type = 'all')
     {
-        return $this->db
-            ->select("users.*, 
-                 GROUP_CONCAT(helpdesk_client.name_app SEPARATOR ', ') as client_apps")
+        $this->db->select("users.*, 
+         GROUP_CONCAT(helpdesk_client.name_app SEPARATOR ', ') as client_apps")
             ->from('users')
             ->join('helpdesk_user_client', 'helpdesk_user_client.id_user = users.id_user', 'left')
             ->join(
@@ -78,8 +97,19 @@ class Users_model extends BF_Model
                 'left'
             )
             ->where('users.deleted', 0)
-            ->where('users.username !=', 'json')
-            ->group_by('users.id_user')
+            ->where('users.username !=', 'json');
+
+        // Apply filter based on type
+        if ($filter_type === 'internal') {
+            $this->db->where('users.status', 0);
+        } elseif ($filter_type === 'external') {
+            $this->db->where('users.status', 1);
+        } elseif ($filter_type === 'ba') {
+            $this->db->where('users.is_ba', 1);
+        }
+        // 'all' tidak perlu kondisi tambahan
+
+        return $this->db->group_by('users.id_user')
             ->order_by('users.nm_lengkap', 'ASC')
             ->get()
             ->result_array();

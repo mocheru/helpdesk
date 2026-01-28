@@ -34,12 +34,6 @@
 		width: 80%;
 	}
 
-	.skeleton-toggle {
-		width: 90px;
-		height: 34px;
-		border-radius: 34px;
-	}
-
 	.skeleton-button {
 		width: 36px;
 		height: 36px;
@@ -124,17 +118,26 @@
 </style>
 
 <div class="card shadow-sm border-0">
-	<div class="card-header bg-white d-flex align-items-center justify-content-between">
-		<div>
+	<div class="card-header bg-white d-flex align-items-center">
+		<div class="d-flex align-items-center">
+			<label class="me-2 mb-0 fw-semibold">Filter:</label>
+			<select id="filter-user-type" class="form-select form-select-sm" style="width: 180px;">
+				<option value="all">All Users</option>
+				<option value="internal">Internal</option>
+				<option value="external">External</option>
+				<option value="ba">Business Analyst</option>
+			</select>
+		</div>
+		<div class="ms-auto d-flex align-items-center gap-2">
 			<?php if ($ENABLE_ADD) : ?>
 				<a href="<?= site_url('users/setting/create') ?>" class="btn btn-sm btn-success">
 					<i class="fa fa-plus me-1"></i>Add User
 				</a>
 			<?php endif; ?>
+			<button class="btn btn-outline-secondary btn-sm refresh-users">
+				<i class="fa fa-refresh"></i> Refresh
+			</button>
 		</div>
-		<button class="btn btn-outline-secondary btn-sm refresh-users">
-			<i class="fa fa-refresh"></i> Refresh
-		</button>
 	</div>
 
 	<div class="card-body">
@@ -142,22 +145,6 @@
 		<div id="skeleton-loading">
 			<div class="table-responsive">
 				<table class="table table-striped table-hover align-middle w-100">
-					<thead class="table-light">
-						<tr>
-							<th style="width:60px;">#</th>
-							<th><?= lang('users_username') ?></th>
-							<th><?= lang('users_email') ?></th>
-							<th><?= lang('users_nm_lengkap') ?></th>
-							<th><?= lang('users_alamat') ?></th>
-							<th><?= lang('users_kota') ?></th>
-							<th><?= lang('users_hp') ?></th>
-							<th>Client Apps</th>
-							<th style="width:120px;"><?= lang('users_st_aktif') ?></th>
-							<?php if ($ENABLE_MANAGE) : ?>
-								<th style="width:110px;" class="text-end">Action</th>
-							<?php endif; ?>
-						</tr>
-					</thead>
 					<tbody>
 						<?php for ($i = 0; $i < 5; $i++) : ?>
 							<tr>
@@ -186,14 +173,8 @@
 									<div class="skeleton skeleton-line medium"></div>
 								</td>
 								<td>
-									<div class="skeleton skeleton-toggle"></div>
+									<div class="skeleton skeleton-line medium"></div>
 								</td>
-								<?php if ($ENABLE_MANAGE) : ?>
-									<td class="text-end">
-										<div class="skeleton skeleton-button"></div>
-										<div class="skeleton skeleton-button"></div>
-									</td>
-								<?php endif; ?>
 							</tr>
 						<?php endfor; ?>
 					</tbody>
@@ -210,11 +191,13 @@
 	$(document).ready(function() {
 		loadUsers();
 
-		function loadUsers() {
+		function loadUsers(filter = 'all') {
 			$.ajax({
-
 				url: siteurl + active_controller + 'setting/get_data',
 				type: 'GET',
+				data: {
+					filter_type: filter
+				},
 				beforeSend: function() {
 					$('#skeleton-loading').show();
 					$('#users-content').hide();
@@ -249,9 +232,15 @@
 			});
 		}
 
+		$('#filter-user-type').on('change', function() {
+			const filterValue = $(this).val();
+			loadUsers(filterValue);
+		});
+
 		$(document).on('click', '.refresh-users', function(e) {
 			e.preventDefault();
-			loadUsers();
+			const currentFilter = $('#filter-user-type').val();
+			loadUsers(currentFilter);
 		});
 
 		$(document).on('change', '.toggle-status-checkbox', function() {

@@ -214,8 +214,10 @@ $loginUserId = $this->auth->user_id();
                                     <i class="fa-solid fa-clock-rotate-left"></i>
                                 </button>
                                 <?php if ($ENABLE_MANAGE): ?>
-                                    <?php if (in_array($status, [0, 2, 6]) && $picById == $loginUserId): // open, pending, revisi 
-                                    ?>
+                                    <?php if (
+                                        $picById == $loginUserId &&
+                                        in_array($status, [0, 2, 6])
+                                    ): ?>
                                         <button type="button"
                                             class="btn btn-primary btn-sm px-2 py-1 process-status"
                                             data-id="<?= $row['id'] ?>"
@@ -234,7 +236,7 @@ $loginUserId = $this->auth->user_id();
                                         </button>
                                     <?php endif; ?>
 
-                                    <?php if ($createById == $loginUserId): // open, process, pending 
+                                    <?php if ( $status === 0 && $createById == $loginUserId): // open, process, pending 
                                     ?>
                                         <button type="button"
                                             class="btn btn-danger btn-sm px-2 py-1 cancel-status"
