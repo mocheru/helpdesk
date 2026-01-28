@@ -463,7 +463,7 @@ $ENABLE_DELETE  = has_permission('Ticket.Delete');
 				</h5>
 				<button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
 			</div>
-			
+
 			<div class="modal-body p-0 d-flex flex-column flex-grow-1">
 				<!-- Chat Messages Container -->
 				<div id="chatMessages" class="flex-grow-1 p-3" style="overflow-y: auto;">
@@ -508,6 +508,9 @@ $ENABLE_DELETE  = has_permission('Ticket.Delete');
 								<i class="fa-solid fa-paper-plane"></i> Send
 							</button>
 						</div>
+						<small class="text-muted d-block mt-1">
+							<i class="fa-solid fa-info-circle"></i> Maximum file size: 2MB
+						</small>
 					</form>
 				</div>
 			</div>

@@ -818,27 +818,60 @@ class Ticket extends Admin_Controller
     ];
 
     if ($hasFile) {
-      $config['upload_path'] = './uploads/helpdesk_chat/';
-      $config['allowed_types'] = 'jpg|jpeg|png|gif|pdf|doc|docx|xls|xlsx|zip|rar';
-      $config['max_size'] = 2048; // 2MB
-      $config['encrypt_name'] = TRUE;
+      $upload_path = './uploads/helpdesk_chat/';
 
-      if (!is_dir($config['upload_path'])) {
-        mkdir($config['upload_path'], 0777, TRUE);
+      if (!is_dir($upload_path)) {
+        mkdir($upload_path, 0755, TRUE);
       }
 
-      $this->upload->initialize($config);
+      $file_name = $_FILES['chat_file']['name'];
+      $file_tmp = $_FILES['chat_file']['tmp_name'];
+      $file_size = $_FILES['chat_file']['size'];
+      $file_error = $_FILES['chat_file']['error'];
 
-      if ($this->upload->do_upload('chat_file')) {
-        $upload_data = $this->upload->data();
+      // Validasi error upload
+      if ($file_error !== UPLOAD_ERR_OK) {
+        echo json_encode(['status' => 0, 'message' => 'Upload error code: ' . $file_error]);
+        return;
+      }
 
-        $data['file_name'] = $upload_data['file_name'];
-        $data['original_name'] = $_FILES['chat_file']['name'];
-        $data['file_type'] = $upload_data['file_type'];
-        $data['file_size'] = $upload_data['file_size'] * 1024;
+      // Validasi ekstensi
+      $allowed_ext = ['jpg', 'jpeg', 'png', 'gif', 'pdf', 'doc', 'docx', 'xls', 'xlsx', 'zip', 'rar'];
+      $file_ext = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
+
+      if (!in_array($file_ext, $allowed_ext)) {
+        echo json_encode(['status' => 0, 'message' => 'File type not allowed: ' . $file_ext]);
+        return;
+      }
+
+      // Validasi size (2MB)
+      if ($file_size > 2048000) {
+        echo json_encode(['status' => 0, 'message' => 'File size exceeds 2MB']);
+        return;
+      }
+
+      if (in_array($file_ext, ['jpg', 'jpeg', 'png', 'gif'])) {
+        $image_info = getimagesize($file_tmp);
+        if ($image_info === false) {
+          echo json_encode(['status' => 0, 'message' => 'Invalid image file']);
+          return;
+        }
+      }
+
+      $new_file_name = 'chat_' . time() . '_' . uniqid() . '.' . $file_ext;
+      $destination = $upload_path . $new_file_name;
+
+      if (move_uploaded_file($file_tmp, $destination)) {
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $detected_mime = finfo_file($finfo, $destination);
+        finfo_close($finfo);
+
+        $data['file_name'] = $new_file_name;
+        $data['original_name'] = $file_name;
+        $data['file_type'] = $detected_mime;
+        $data['file_size'] = $file_size;
       } else {
-        $error = $this->upload->display_errors('', '');
-        echo json_encode(['status' => 0, 'message' => 'Upload gagal: ' . $error]);
+        echo json_encode(['status' => 0, 'message' => 'Failed to move uploaded file']);
         return;
       }
     }
