@@ -12,14 +12,14 @@ $loginUserId = $this->auth->user_id();
                 <th style="min-width: 20px;">No</th>
                 <th style="min-width: 80px;">No Tiket</th>
                 <th style="min-width: 200px;">Report</th>
-                <th style="min-width: 150px;">Category</th>
-                <th style="min-width: 150px;">Sub Category</th>
-                <th style="min-width: 180px;">Causes</th>
-                <th style="min-width: 180px;">Action Plan</th>
+                <!-- <th style="min-width: 150px;">Category</th> -->
+                <!-- <th style="min-width: 150px;">Sub Category</th> -->
+                <!-- <th style="min-width: 180px;">Causes</th> -->
+                <!-- <th style="min-width: 180px;">Action Plan</th> -->
                 <th style="min-width: 150px;">Create By</th>
                 <th style="min-width: 110px;">Due Date</th>
-                <th style="min-width: 120px;">PIC</th>
-                <th style="min-width: 150px;">Approve By</th>
+                <!-- <th style="min-width: 120px;">PIC</th> -->
+                <!-- <th style="min-width: 150px;">Approve By</th> -->
                 <th style="min-width: 100px;" class="text-center">Action</th>
             </tr>
         </thead>
@@ -30,82 +30,101 @@ $loginUserId = $this->auth->user_id();
                     <tr>
                         <td class="text-center"><?= $no++ ?></td>
                         <td>
-                            <strong><?= htmlspecialchars($row['no_ticket']) ?></strong> <br>
+                            <strong><?= htmlspecialchars($row['no_ticket']) ?></strong><br>
+
                             <?php
                             $statusClass = 'bg-secondary';
-                            $statusIcon = 'fa-question';
-                            $statusText = 'Unknown';
+                            $statusIcon  = 'fa-question';
+                            $statusText  = 'Unknown';
 
-                            switch ((int) $row['status']) {
-                                case 0: // Open
+                            switch ((int)$row['status']) {
+                                case 0:
                                     $statusClass = 'bg-info';
                                     $statusIcon  = 'fa-circle-dot';
                                     $statusText  = 'Open';
                                     break;
-
-                                case 1: // Process (On Progress)
+                                case 1:
                                     $statusClass = 'bg-warning';
                                     $statusIcon  = 'fa-spinner fa-spin';
                                     $statusText  = 'Process';
                                     break;
-
-                                case 2: // Pending
+                                case 2:
                                     $statusClass = 'bg-secondary';
                                     $statusIcon  = 'fa-hourglass-half';
                                     $statusText  = 'Pending';
                                     break;
-
-                                case 3: // Cancel
+                                case 3:
                                     $statusClass = 'bg-danger';
                                     $statusIcon  = 'fa-ban';
                                     $statusText  = 'Cancel';
                                     break;
-
-                                case 4: // Done
+                                case 4:
                                     $statusClass = 'bg-success';
                                     $statusIcon  = 'fa-circle-check';
                                     $statusText  = 'Done';
                                     break;
-
-                                case 5: // Close
+                                case 5:
                                     $statusClass = 'bg-dark';
                                     $statusIcon  = 'fa-lock';
                                     $statusText  = 'Closed';
                                     break;
-
-                                case 6: // Revisi
+                                case 6:
                                     $statusClass = 'bg-primary';
                                     $statusIcon  = 'fa-rotate-left';
                                     $statusText  = 'Revisi';
                                     break;
                             }
                             ?>
+
                             <span class="badge <?= $statusClass ?>">
                                 <i class="fa-solid <?= $statusIcon ?>"></i>
                                 <?= $statusText ?>
                             </span>
 
-                            <?php if (!is_null($row['is_approve'])): ?>
+                            <?php
+                            $approvalLevel  = (int)($row['approval_level'] ?? 0);
+                            $currentLevel   = (int)($row['current_approval_level'] ?? 0);
+                            $isApprove      = $row['is_approve'] ?? null;
+                            ?>
+
+                            <?php if ((int)$row['status'] === 4): ?>
                                 <div class="mt-1">
-                                    <?php if ($row['is_approve'] == 1): ?>
-                                        <span class="badge bg-success" data-bs-toggle="tooltip" title="Approved on <?= date('d-m-Y H:i', strtotime($row['approval_date'])) ?>">
+
+                                    <?php if ($isApprove == 1): ?>
+                                        <span class="badge bg-success">
                                             <i class="fa-solid fa-check-double"></i> Approved
                                         </span>
-                                    <?php elseif ($row['is_approve'] == 2): ?>
-                                        <span class="badge bg-danger" data-bs-toggle="tooltip" title="Rejected on <?= date('d-m-Y H:i', strtotime($row['approval_date'])) ?>">
+
+                                    <?php elseif ($isApprove == 2): ?>
+                                        <span class="badge bg-danger">
                                             <i class="fa-solid fa-xmark"></i> Rejected
                                         </span>
+
+                                    <?php elseif (
+                                        $approvalLevel > 1 &&
+                                        $currentLevel == ($approvalLevel - 1) &&
+                                        $isApprove == 0
+                                    ): ?>
+                                        <span class="badge bg-warning text-dark">
+                                            <i class="fa-solid fa-user-check"></i>
+                                            Menunggu Konfirmasi Pembuat
+                                        </span>
+
+                                    <?php elseif ($currentLevel < ($approvalLevel - 1)): ?>
+                                        <span class="badge bg-secondary">
+                                            <i class="fa-solid fa-clock"></i>
+                                            Menunggu Approval
+                                        </span>
+
                                     <?php endif; ?>
+
                                 </div>
                             <?php endif; ?>
-                            <?php
-                            $picId   = isset($row['pic_id']) ? trim((string)$row['pic_id']) : '';
-                            $status  = isset($row['status']) ? (int)$row['status'] : 0;
-                            $approvalById = isset($row['approval_by_id']) ? trim((string)$row['approval_by_id']) : '';
-                            $picById = isset($row['pic_id']) ? trim((string)$row['pic_id']) : '';
-                            $createById = isset($row['create_by_id']) ? trim((string)$row['create_by_id']) : '';
 
-                            if ($picId === '' && $status !== 3):
+
+                            <?php
+                            $picId = trim((string)($row['pic_id'] ?? ''));
+                            if ($picId === '' && (int)$row['status'] !== 3):
                             ?>
                                 <div class="mt-1">
                                     <span class="badge bg-warning text-dark">
@@ -113,38 +132,12 @@ $loginUserId = $this->auth->user_id();
                                     </span>
                                 </div>
                             <?php endif; ?>
-
-                            <?php
-                            if ((int)$row['status'] === 4 && (string)$row['is_approve'] === '0'):
-                            ?>
-                                <div class="mt-1">
-                                    <span class="badge bg-secondary">
-                                        <i class="fa-solid fa-clock"></i> Menunggu Approval
-                                    </span>
-                                </div>
-                            <?php endif; ?>
-
                         </td>
+
                         <td>
                             <div class="text-truncate" style="max-width: 200px;"
                                 title="<?= htmlspecialchars($row['report']) ?>">
                                 <?= htmlspecialchars($row['report']) ?>
-                            </div>
-                        </td>
-                        <td><?= htmlspecialchars($row['category_name']) ?></td>
-                        <td><?= htmlspecialchars($row['sub_category_name']) ?></td>
-                        <td>
-                            <?php $causes = trim((string)$row['causes']); ?>
-                            <div class="text-truncate" style="max-width: 180px;"
-                                title="<?= $causes === '' ? '-' : htmlspecialchars($causes) ?>">
-                                <?= $causes === '' ? '-' : htmlspecialchars($causes) ?>
-                            </div>
-                        </td>
-                        <td>
-                            <?php $actionPlan = trim((string)$row['action_plan']); ?>
-                            <div class="text-truncate" style="max-width: 180px;"
-                                title="<?= $actionPlan === '' ? '-' : htmlspecialchars($actionPlan) ?>">
-                                <?= $actionPlan === '' ? '-' : htmlspecialchars($actionPlan) ?>
                             </div>
                         </td>
                         <td>
@@ -173,39 +166,40 @@ $loginUserId = $this->auth->user_id();
                             ?>
                         </td>
 
-                        <td>
-                            <?= trim((string)$row['pic']) === '' ? '-' : htmlspecialchars($row['pic']) ?>
-                        </td>
-                        <td>
-                            <?= trim((string)$row['approval_by']) === '' ? '-' : htmlspecialchars($row['approval_by']) ?>
-                        </td>
                         <?php
-                        $status = (int)$row['status'];
+                        $status                = (int) $row['status'];
+                        $approvalLevel          = (int) $row['approval_level'];
+                        $currentApprovalLevel   = (int) $row['current_approval_level'];
+                        $approvalById           = $row['approval_by_id'];
+                        $createById             = $row['create_by_id'];
+                        $unread_count           = isset($unread_counts[$row['id']]) ? $unread_counts[$row['id']] : 0;
                         ?>
+
+                        <?php
+                        $picById     = isset($row['pic_id']) ? trim((string)$row['pic_id']) : '';
+                        $createById = isset($row['create_by_id']) ? trim((string)$row['create_by_id']) : '';
+                        $approvalById = isset($row['approval_by_id']) ? trim((string)$row['approval_by_id']) : '';
+                        $status      = isset($row['status']) ? (int)$row['status'] : 0;
+                        ?>
+
+
                         <td class="text-center">
                             <div class="d-inline-flex gap-1">
-                                <?php
-                                $unread_count = isset($unread_counts[$row['id']]) ? $unread_counts[$row['id']] : 0;
-                                ?>
 
+                                <!-- CHAT -->
                                 <button type="button"
                                     class="btn btn-primary btn-sm px-2 py-1 open-chat position-relative"
                                     data-id="<?= $row['id'] ?>"
                                     data-ticket="<?= $row['no_ticket'] ?>"
                                     title="Chat Room">
                                     <i class="fa-solid fa-comments"></i>
-                                    <?php if ($unread_count > 0): ?>
-                                        <span class="chat-unread-badge-<?= $row['id'] ?> position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
-                                            style="font-size: 9px; padding: 2px 5px;">
-                                            <?= $unread_count > 99 ? '99+' : $unread_count ?>
-                                        </span>
-                                    <?php else: ?>
-                                        <span class="chat-unread-badge-<?= $row['id'] ?> position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
-                                            style="display: none; font-size: 9px; padding: 2px 5px;">
-                                            0
-                                        </span>
-                                    <?php endif; ?>
+                                    <span class="chat-unread-badge-<?= $row['id'] ?> position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                                        style="<?= $unread_count > 0 ? '' : 'display:none;' ?> font-size:9px;padding:2px 5px;">
+                                        <?= $unread_count > 99 ? '99+' : $unread_count ?>
+                                    </span>
                                 </button>
+
+                                <!-- HISTORY -->
                                 <button type="button"
                                     class="btn btn-secondary btn-sm px-2 py-1 view-history"
                                     data-id="<?= $row['id'] ?>"
@@ -213,11 +207,11 @@ $loginUserId = $this->auth->user_id();
                                     title="View History">
                                     <i class="fa-solid fa-clock-rotate-left"></i>
                                 </button>
+
                                 <?php if ($ENABLE_MANAGE): ?>
-                                    <?php if (
-                                        $picById == $loginUserId &&
-                                        in_array($status, [0, 2, 6])
-                                    ): ?>
+
+                                    <!-- PROCESS -->
+                                    <?php if ($picById == $loginUserId && in_array($status, [0, 2, 6])): ?>
                                         <button type="button"
                                             class="btn btn-primary btn-sm px-2 py-1 process-status"
                                             data-id="<?= $row['id'] ?>"
@@ -226,8 +220,8 @@ $loginUserId = $this->auth->user_id();
                                         </button>
                                     <?php endif; ?>
 
-                                    <?php if ($status === 1 && $picById == $loginUserId): // process 
-                                    ?>
+                                    <!-- PENDING -->
+                                    <?php if ($status === 1 && $picById == $loginUserId): ?>
                                         <button type="button"
                                             class="btn btn-secondary btn-sm px-2 py-1 pending-status"
                                             data-id="<?= $row['id'] ?>"
@@ -236,8 +230,8 @@ $loginUserId = $this->auth->user_id();
                                         </button>
                                     <?php endif; ?>
 
-                                    <?php if ( $status === 0 && $createById == $loginUserId): // open, process, pending 
-                                    ?>
+                                    <!-- CANCEL -->
+                                    <?php if ($status === 0 && $createById == $loginUserId): ?>
                                         <button type="button"
                                             class="btn btn-danger btn-sm px-2 py-1 cancel-status"
                                             data-id="<?= $row['id'] ?>"
@@ -246,8 +240,8 @@ $loginUserId = $this->auth->user_id();
                                         </button>
                                     <?php endif; ?>
 
-                                    <?php if ($status === 1 && $picById == $loginUserId): // process 
-                                    ?>
+                                    <!-- DONE -->
+                                    <?php if ($status === 1 && $picById == $loginUserId): ?>
                                         <button type="button"
                                             class="btn btn-success btn-sm px-2 py-1 done-status"
                                             data-id="<?= $row['id'] ?>"
@@ -255,10 +249,11 @@ $loginUserId = $this->auth->user_id();
                                             <i class="fa-solid fa-clipboard-check"></i>
                                         </button>
                                     <?php endif; ?>
+
                                 <?php endif; ?>
 
-                                <?php if ($ENABLE_VIEW):
-                                ?>
+                                <!-- VIEW -->
+                                <?php if ($ENABLE_VIEW): ?>
                                     <button type="button"
                                         class="btn btn-info btn-sm px-2 py-1 view-ticket"
                                         data-id="<?= $row['id'] ?>"
@@ -267,6 +262,7 @@ $loginUserId = $this->auth->user_id();
                                     </button>
                                 <?php endif; ?>
 
+                                <!-- EDIT -->
                                 <?php if ($ENABLE_MANAGE && $status === 0): ?>
                                     <button type="button"
                                         class="btn btn-warning btn-sm px-2 py-1 edit-ticket"
@@ -276,25 +272,61 @@ $loginUserId = $this->auth->user_id();
                                     </button>
                                 <?php endif; ?>
 
-                                <?php if ($ENABLE_MANAGE && $status === 4 && $approvalById !== '' && $approvalById !== '0' && $approvalById == $loginUserId): ?>
+                                <!-- REJECT (SEMUA LEVEL) -->
+                                <?php if (
+                                    $ENABLE_MANAGE &&
+                                    $status === 4 &&
+                                    $currentApprovalLevel < $approvalLevel &&
+                                    (
+                                        ($currentApprovalLevel === 0 && $approvalById == $loginUserId) ||
+                                        ($currentApprovalLevel === 1 && $createById == $loginUserId)
+                                    )
+                                ): ?>
                                     <button type="button"
                                         class="btn btn-danger btn-sm px-2 py-1 reject-status"
                                         data-id="<?= $row['id'] ?>"
-                                        title="reject Ticket">
+                                        title="Reject Ticket">
                                         <i class="fa-solid fa-xmark"></i>
                                     </button>
                                 <?php endif; ?>
 
-                                <?php if ($ENABLE_MANAGE && $status === 4 && $approvalById !== '' && $approvalById !== '0' && $approvalById == $loginUserId): ?>
+                                <!-- APPROVE LEVEL 1 -->
+                                <?php if (
+                                    $ENABLE_MANAGE &&
+                                    $status === 4 &&
+                                    $approvalLevel >= 1 &&
+                                    $currentApprovalLevel === 0 &&
+                                    $approvalById == $loginUserId
+                                ): ?>
                                     <button type="button"
                                         class="btn btn-success btn-sm px-2 py-1 approve-status"
                                         data-id="<?= $row['id'] ?>"
-                                        title="approve Ticket">
+                                        data-level="1"
+                                        title="Approve Level 1">
+                                        <i class="fa-solid fa-check"></i>
+                                    </button>
+                                <?php endif; ?>
+
+                                <!-- APPROVE LEVEL 2 -->
+                                <?php if (
+                                    $ENABLE_MANAGE &&
+                                    $status === 4 &&
+                                    $approvalLevel >= 2 &&
+                                    $currentApprovalLevel === 1 &&
+                                    $createById == $loginUserId
+                                ): ?>
+                                    <button type="button"
+                                        class="btn btn-success btn-sm px-2 py-1 approve-status"
+                                        data-id="<?= $row['id'] ?>"
+                                        data-level="2"
+                                        title="Approve Level 2">
                                         <i class="fa-solid fa-check-double"></i>
                                     </button>
                                 <?php endif; ?>
+
                             </div>
                         </td>
+
                     </tr>
                 <?php endforeach; ?>
             <?php else: ?>

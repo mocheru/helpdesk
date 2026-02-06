@@ -21,6 +21,7 @@ $sub_categories = isset($sub_categories) ? $sub_categories : [];
 $causes = isset($helpdesk->causes) ? $helpdesk->causes : '';
 $action_plan = isset($helpdesk->action_plan) ? $helpdesk->action_plan : '';
 $due_date = isset($helpdesk->due_date) ? $helpdesk->due_date : '';
+$man_hour = isset($helpdesk->man_hour) ? $helpdesk->man_hour : '';
 $pic_id = isset($helpdesk->pic_id) ? $helpdesk->pic_id : '';
 $pic = isset($helpdesk->pic) ? $helpdesk->pic : '';
 $status = isset($helpdesk->status) ? $helpdesk->status : 'Open';
@@ -599,9 +600,9 @@ $colCategory = ($mode === 'view') ? 'col-md-6' : 'col-md-4';
                     <?php endif; ?>
                 </div>
 
-                <!-- Due Date, PIC & Approval -->
+                <!-- Due Date, Man Hour, PIC & Approval -->
                 <div class="row g-3 mb-3">
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <label class="form-label">Due Date</label>
                         <?php if ($is_readonly): ?>
                             <div class="view-field">
@@ -619,7 +620,29 @@ $colCategory = ($mode === 'view') ? 'col-md-6' : 'col-md-4';
                         <?php endif; ?>
                     </div>
 
-                    <div class="col-md-4">
+                    <div class="col-md-3">
+                        <label class="form-label">
+                            <i class="fa-solid fa-clock"></i> Man Hour
+                        </label>
+                        <?php if ($is_readonly): ?>
+                            <div class="view-field">
+                                <?php
+                                $man_hour = isset($helpdesk->man_hour) ? $helpdesk->man_hour : '';
+                                echo $man_hour ? htmlspecialchars($man_hour) . ' jam' : '-';
+                                ?>
+                            </div>
+                        <?php else: ?>
+                            <div class="input-group">
+                                <input type="number" class="form-control" name="man_hour" id="man_hour"
+                                    value="<?= isset($helpdesk->man_hour) ? $helpdesk->man_hour : '' ?>"
+                                    placeholder="0" min="0" step="0.5"
+                                    <?= $is_readonly ? 'readonly' : '' ?>>
+                                <span class="input-group-text">jam</span>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+
+                    <div class="col-md-3">
                         <label class="form-label">
                             <i class="fa-solid fa-user-check"></i> PIC (Person In Charge)
                         </label>
@@ -627,9 +650,6 @@ $colCategory = ($mode === 'view') ? 'col-md-6' : 'col-md-4';
                             <div class="view-field">
                                 <?php
                                 $pic_display = isset($helpdesk->pic_name) ? htmlspecialchars($helpdesk->pic_name) : '-';
-                                // if (isset($helpdesk->pic_username)) {
-                                //     $pic_display .= ' (' . htmlspecialchars($helpdesk->pic_username) . ')';
-                                // }
                                 echo $pic_display;
                                 ?>
                             </div>
@@ -649,7 +669,7 @@ $colCategory = ($mode === 'view') ? 'col-md-6' : 'col-md-4';
                         <?php endif; ?>
                     </div>
 
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <label class="form-label">
                             <i class="fa-solid fa-user-shield"></i> Approval By
                         </label>
@@ -686,25 +706,24 @@ $colCategory = ($mode === 'view') ? 'col-md-6' : 'col-md-4';
                             </select>
                         <?php endif; ?>
                     </div>
-
                 </div>
-            <?php endif; ?>
-        </form>
-    </div>
 
-    <div class="card-footer">
-        <div class="d-flex gap-2">
-            <a href="<?= site_url('ticket') ?>" class="btn btn-secondary">
-                <i class="fa-solid fa-arrow-left"></i> Back
-            </a>
-
-            <?php if (!$is_readonly): ?>
-                <button type="submit" form="form-helpdesk" class="btn btn-primary" id="btn-save">
-                    <i class="fa-solid fa-floppy-disk"></i> Save
-                </button>
-            <?php endif; ?>
-        </div>
     </div>
+<?php endif; ?>
+</form>
+<div class="card-footer">
+    <div class="d-flex gap-2">
+        <a href="<?= site_url('ticket') ?>" class="btn btn-secondary">
+            <i class="fa-solid fa-arrow-left"></i> Back
+        </a>
+
+        <?php if (!$is_readonly): ?>
+            <button type="submit" form="form-helpdesk" class="btn btn-primary" id="btn-save">
+                <i class="fa-solid fa-floppy-disk"></i> Save
+            </button>
+        <?php endif; ?>
+    </div>
+</div>
 </div>
 
 <!-- Select2 JS -->

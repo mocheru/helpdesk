@@ -697,107 +697,67 @@ $ENABLE_DELETE  = has_permission('Ticket.Delete');
 	}
 
 	function updateTicketApproval(ticketId, action) {
-		var actionText = (action === 'approve') ? 'approve' : 'reject';
-		var actionUpper = actionText.charAt(0).toUpperCase() + actionText.slice(1);
-		var isApprove = (action === 'approve') ? 1 : 2;
+
+		var actionUpper = action.charAt(0).toUpperCase() + action.slice(1);
 
 		var modalContent = `
-			<div class="mb-3">
-				<p>
-					${action === 'approve'
-						? 'Ticket akan ditandai sebagai selesai dan ditutup.'
-						: 'Ticket akan dikembalikan untuk revisi.'}
-				</p>
-				<div class="form-group mt-3">
-					<label for="approvalReason" class="form-label">
-						${action === 'approve' ? 'Catatan Approval' : 'Alasan Penolakan'}
-						<small class="text-danger"></small>
-					</label>
-					<textarea
-						class="form-control"
-						id="approvalReason"
-						rows="3"
-						placeholder="${action === 'approve'
-							? 'Masukkan catatan approval...'
-							: 'Masukkan alasan penolakan...'}"
-					></textarea>
-				</div>
-			</div>
-		`;
+        <div class="mb-3">
+            <p>
+                ${action === 'approve'
+                    ? 'Approval akan diproses.'
+                    : 'Ticket akan dikembalikan ke revisi.'}
+            </p>
+            <div class="form-group mt-3">
+                <label>
+                    ${action === 'approve' ? 'Catatan Approval' : 'Alasan Penolakan'}
+                </label>
+                <textarea class="form-control" id="approvalReason" rows="3"></textarea>
+            </div>
+        </div>
+    	`;
 
 		Swal.fire({
 			title: 'Konfirmasi ' + actionUpper,
 			html: modalContent,
-			icon: (action === 'approve') ? 'question' : 'warning',
+			icon: action === 'approve' ? 'question' : 'warning',
 			showCancelButton: true,
-			confirmButtonText: '<i class="fa-solid fa-check"></i> Ya, ' + actionUpper,
-			cancelButtonText: '<i class="fa-solid fa-xmark"></i> Batal',
-			confirmButtonColor: (action === 'approve') ? '#198754' : '#dc3545',
-			cancelButtonColor: '#6c757d',
+			confirmButtonText: 'Ya, ' + actionUpper,
 			preConfirm: () => {
-				var approvalReason = $('#approvalReason').val();
-
-				if (!approvalReason || !approvalReason.trim()) {
-					Swal.showValidationMessage(
-						action === 'approve' ?
-						'Catatan approval wajib diisi' :
-						'Alasan penolakan wajib diisi'
-					);
+				let reason = $('#approvalReason').val();
+				if (!reason.trim()) {
+					Swal.showValidationMessage('Wajib diisi');
 					return false;
 				}
-
 				return {
-					approvalReason: approvalReason.trim()
+					reason: reason.trim()
 				};
-			},
-			allowOutsideClick: () => !Swal.isLoading()
-		}).then((result) => {
-			if (result.isConfirmed) {
-				Swal.fire({
-					title: 'Processing...',
-					html: '<i class="fa-solid fa-spinner fa-spin fa-2x"></i>',
-					allowOutsideClick: false,
-					showConfirmButton: false
-				});
-
-				$.ajax({
-					url: siteurl + active_controller + 'update_approval',
-					type: 'POST',
-					data: {
-						id: ticketId,
-						is_approve: isApprove,
-						approval_reason: result.value.approvalReason
-					},
-					dataType: 'json',
-					success: function(response) {
-						if (response.status == 1) {
-							Swal.fire({
-								icon: 'success',
-								title: 'Berhasil!',
-								text: response.message,
-								timer: 2000,
-								showConfirmButton: false
-							});
-							loadHelpdeskList();
-						} else {
-							Swal.fire({
-								icon: 'error',
-								title: 'Gagal!',
-								text: response.message
-							});
-						}
-					},
-					error: function(xhr) {
-						Swal.fire({
-							icon: 'error',
-							title: 'Error!',
-							text: xhr.responseJSON?.message || 'Terjadi kesalahan pada sistem'
-						});
-					}
-				});
 			}
+		}).then((result) => {
+			if (!result.isConfirmed) return;
+
+			$.ajax({
+				url: siteurl + active_controller + 'update_approval',
+				type: 'POST',
+				dataType: 'json',
+				data: {
+					id: ticketId,
+					action: action, // approve / reject
+					approval_reason: result.value.reason
+				},
+				success: function(res) {
+					Swal.fire({
+						icon: res.status ? 'success' : 'error',
+						title: res.status ? 'Berhasil' : 'Gagal',
+						text: res.message,
+						timer: 1500,
+						showConfirmButton: false
+					});
+					if (res.status) loadHelpdeskList();
+				}
+			});
 		});
 	}
+
 
 	function changeTicketStatus(ticketId, status, statusText) {
 		var modalContent = '';
@@ -931,6 +891,9 @@ $ENABLE_DELETE  = has_permission('Ticket.Delete');
 	function buildHistoryTimeline(historyData) {
 		var timeline = '';
 
+		// =========================
+		// ACTION TYPE CONFIG
+		// =========================
 		var actionTypeLabels = {
 			0: {
 				icon: 'fa-plus-circle',
@@ -954,7 +917,7 @@ $ENABLE_DELETE  = has_permission('Ticket.Delete');
 			},
 			4: {
 				icon: 'fa-check-circle',
-				text: 'Approved',
+				text: 'Approval',
 				color: '#28a745'
 			},
 			5: {
@@ -968,12 +931,15 @@ $ENABLE_DELETE  = has_permission('Ticket.Delete');
 				color: '#6c757d'
 			},
 			7: {
-				icon: 'fa-edit',
-				text: 'Data Updated',
-				color: '#ff00d9'
+				icon: 'fa-user-check',
+				text: 'Final Approval',
+				color: '#198754'
 			}
 		};
 
+		// =========================
+		// STATUS LABEL
+		// =========================
 		var statusLabels = {
 			0: 'Open',
 			1: 'Process',
@@ -984,6 +950,9 @@ $ENABLE_DELETE  = has_permission('Ticket.Delete');
 			6: 'Revisi'
 		};
 
+		// =========================
+		// LOOP HISTORY
+		// =========================
 		historyData.forEach(function(item) {
 			var actionInfo = actionTypeLabels[item.action_type] || {
 				icon: 'fa-circle',
@@ -993,44 +962,96 @@ $ENABLE_DELETE  = has_permission('Ticket.Delete');
 
 			var description = item.description || '';
 
-			// Info status change
-			if (item.old_status !== null && item.new_status !== null) {
+			// =========================
+			// STATUS CHANGE INFO
+			// =========================
+			if (item.old_status !== null && item.new_status !== null && item.old_status != item.new_status) {
 				var oldStatusText = statusLabels[item.old_status] || item.old_status;
 				var newStatusText = statusLabels[item.new_status] || item.new_status;
-				description += '<br><small class="text-muted">Status: <strong>' + oldStatusText + '</strong> → <strong>' + newStatusText + '</strong></small>';
+
+				description += `
+				<br>
+				<small class="text-muted">
+					Status:
+					<strong>${oldStatusText}</strong> →
+					<strong>${newStatusText}</strong>
+				</small>`;
 			}
 
-			if (item.action_type == 5) { // 5 = Rejected
-				description += '<br><small class="text-warning"><i class="fa-solid fa-rotate-left"></i> <strong>Tiket direvisi</strong></small>';
+			// =========================
+			// APPROVAL LEVEL INFO
+			// =========================
+			if (item.action_type == 4 && item.old_status == item.new_status) {
+				description += `
+				<br>
+				<small class="text-secondary">
+					<i class="fa-solid fa-clock"></i>
+					Menunggu approval berikutnya
+				</small>`;
 			}
 
+			if (item.action_type == 7) {
+				description += `
+				<br>
+				<small class="text-success">
+					<i class="fa-solid fa-lock"></i>
+					Ticket ditutup setelah final approval
+				</small>`;
+			}
+
+			// =========================
+			// REJECT INFO
+			// =========================
+			if (item.action_type == 5) {
+				description += `
+				<br>
+				<small class="text-warning">
+					<i class="fa-solid fa-rotate-left"></i>
+					Tiket dikembalikan ke revisi
+				</small>`;
+			}
+
+			// =========================
+			// REMARK / NOTE
+			// =========================
 			if (item.cause_pic && item.cause_pic.trim() !== '') {
-				description += '<br><small class="text-info"><i class="fa-solid fa-comment-dots"></i> <strong>Remark:</strong> ' + item.cause_pic + '</small>';
+				description += `
+				<br>
+				<small class="text-info">
+					<i class="fa-solid fa-comment-dots"></i>
+					<strong>Remark:</strong> ${item.cause_pic}
+				</small>`;
 			}
 
+			// =========================
+			// BUILD HTML
+			// =========================
 			timeline += `
-				<div class="timeline-item">
-					<div class="timeline-marker" style="background-color: ${actionInfo.color};">
-						<i class="fa-solid ${actionInfo.icon}"></i>
-					</div>
-					<div class="timeline-content">
-						<div class="d-flex justify-content-between align-items-start mb-1">
-							<span class="fw-bold" style="color: ${actionInfo.color};">${actionInfo.text}</span>
-							<small class="text-muted">
-								<i class="fa-solid fa-clock"></i> ${formatDate(item.action_date)}
+					<div class="timeline-item">
+						<div class="timeline-marker" style="background-color: ${actionInfo.color};">
+							<i class="fa-solid ${actionInfo.icon}"></i>
+						</div>
+						<div class="timeline-content">
+							<div class="d-flex justify-content-between align-items-start mb-1">
+								<span class="fw-bold" style="color: ${actionInfo.color};">
+									${actionInfo.text}
+								</span>
+								<small class="text-muted">
+									<i class="fa-solid fa-clock"></i> ${formatDate(item.action_date)}
+								</small>
+							</div>
+							<div class="mb-1">${description}</div>
+							<small class="text-muted fst-italic">
+								<i class="fa-solid fa-user"></i> ${item.action_by || 'System'}
 							</small>
 						</div>
-						<div class="mb-1">${description}</div>
-						<small class="text-muted fst-italic">
-							<i class="fa-solid fa-user"></i> ${item.action_by || 'System'}
-						</small>
 					</div>
-				</div>
-			`;
+				`;
 		});
 
 		return timeline;
 	}
+
 
 	function formatDate(dateString) {
 		if (!dateString) return '-';
