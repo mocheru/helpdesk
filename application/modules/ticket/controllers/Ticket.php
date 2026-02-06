@@ -221,36 +221,34 @@ class Ticket extends Admin_Controller
     $sub_category = $this->Ticket_model->get_sub_category_by_id($sub_category_id);
     $sub_category_name = $sub_category ? $sub_category->sub_name : '';
 
-    // LOGIC APPROVAL LEVEL (HANYA SAAT CREATE)
-    $create_by_id = $this->auth->user_id();
+    // LOGIC APPROVAL LEVEL
+    $create_by_id = $id ? $old_ticket->create_by_id : $this->auth->user_id();
 
     $approval_level = 1;
     if (!empty($approval_id) && $create_by_id != $approval_id) {
       $approval_level = 2;
     }
 
-    $data['approval_level'] = $approval_level;
-
-
     // DATA UTAMA
     $data = [
-      'report'           => $this->input->post('report'),
-      'category_id'      => $category_id,
-      'category_name'    => $category_name,
-      'sub_category_id'  => $sub_category_id,
+      'report'            => $this->input->post('report'),
+      'category_id'       => $category_id,
+      'category_name'     => $category_name,
+      'sub_category_id'   => $sub_category_id,
       'sub_category_name' => $sub_category_name,
-      'causes'           => $this->input->post('causes'),
-      'action_plan'      => $this->input->post('action_plan'),
-      'due_date'         => $this->input->post('due_date'),
-      'man_hour'         => $this->input->post('man_hour'),
-      'pic_id'           => $pic_id,
-      'pic'              => $pic_name,
-      'client_id'        => $client_id,
-      'client_name'      => $client_name,
-      'approval_by_id'   => $approval_id,
-      'approval_by'      => $approval_name,
-      'update_date'      => date('Y-m-d H:i:s'),
-      'update_by'        => $this->auth->user_id()
+      'causes'            => $this->input->post('causes'),
+      'action_plan'       => $this->input->post('action_plan'),
+      'due_date'          => $this->input->post('due_date'),
+      'man_hour'          => $this->input->post('man_hour'),
+      'pic_id'            => $pic_id,
+      'pic'               => $pic_name,
+      'client_id'         => $client_id,
+      'client_name'       => $client_name,
+      'approval_by_id'    => $approval_id,
+      'approval_by'       => $approval_name,
+      'approval_level'    => $approval_level,
+      'update_date'       => date('Y-m-d H:i:s'),
+      'update_by'         => $this->auth->user_id()
     ];
 
     // UPDATE
@@ -293,9 +291,6 @@ class Ticket extends Admin_Controller
       $data['create_by']    = $this->auth->user_name();
       $data['create_date']  = date('Y-m-d H:i:s');
       $data['is_delete']    = 0;
-
-      $data['approval_level'] =
-        (!empty($approval_id) && $data['create_by_id'] != $approval_id) ? 2 : 1;
 
       $insert_id = $this->Ticket_model->insert_ticket($data);
 
@@ -435,102 +430,102 @@ class Ticket extends Admin_Controller
   }
 
   public function update_status()
-{
-  if (!has_permission('Helpdesk.Manage')) {
-    echo json_encode([
-      'status' => 0,
-      'message' => 'Anda tidak memiliki izin untuk mengubah status ticket'
-    ]);
-    return;
+  {
+    if (!has_permission('Helpdesk.Manage')) {
+      echo json_encode([
+        'status' => 0,
+        'message' => 'Anda tidak memiliki izin untuk mengubah status ticket'
+      ]);
+      return;
+    }
+
+    $this->load->model('Ticket_model');
+
+    $id     = $this->input->post('id');
+    $status = $this->input->post('status');
+
+    if (empty($id) || !is_numeric($status)) {
+      echo json_encode([
+        'status' => 0,
+        'message' => 'Data tidak valid'
+      ]);
+      return;
+    }
+
+    $old_ticket = $this->Ticket_model->get_ticket_by_id($id);
+    if (!$old_ticket) {
+      echo json_encode([
+        'status' => 0,
+        'message' => 'Ticket tidak ditemukan'
+      ]);
+      return;
+    }
+
+    $statusText = [
+      0 => 'Open',
+      1 => 'Process',
+      2 => 'Pending',
+      3 => 'Cancel',
+      4 => 'Done',
+      5 => 'Close',
+      6 => 'Revisi'
+    ];
+
+    $statusName = $statusText[$status] ?? 'Unknown';
+
+    $data = [
+      'status'       => $status,
+      'update_date'  => date('Y-m-d H:i:s'),
+      'update_by'    => $this->auth->user_id(),
+      'update_by_id' => $this->auth->user_id()
+    ];
+
+    // cancel reason
+    if ($status == 3 && $this->input->post('cancel_reason')) {
+      $data['cancel_reason'] = $this->input->post('cancel_reason');
+    }
+
+    // 🔥 RESET APPROVAL (HANYA INI)
+    if ((int)$status === 1 && (int)$old_ticket->is_approve === 2) {
+      $data['is_approve']         = 0;
+      $data['approval_reason']   = null;
+      $data['approval_2_reason'] = null;
+    }
+
+    $result = $this->Ticket_model->update_ticket_status($id, $data);
+
+    $description = 'Status diubah menjadi ' . $statusName;
+
+    if ((int)$status === 4) {
+      $description .= ' dan menunggu approval';
+    }
+
+    if ($result) {
+
+      $this->Ticket_model->save_history([
+        'helpdesk_id'  => $id,
+        'no_ticket'    => $old_ticket->no_ticket,
+        'action_type'  => 1,
+        'old_status'   => $old_ticket->status,
+        'new_status'   => $status,
+        'description'  => $description,
+        'cause_pic'    => $this->input->post('cancel_reason') ?: null,
+        'action_by'    => $this->auth->nama(),
+        'action_by_id' => $this->auth->user_id(),
+        'action_date'  => date('Y-m-d H:i:s')
+      ]);
+
+      echo json_encode([
+        'status' => 1,
+        'message' => "Status ticket berhasil diubah menjadi {$statusName}"
+      ]);
+    } else {
+      echo json_encode([
+        'status' => 0,
+        'message' => 'Gagal mengubah status ticket'
+      ]);
+    }
   }
-
-  $this->load->model('Ticket_model');
-
-  $id     = $this->input->post('id');
-  $status = $this->input->post('status');
-
-  if (empty($id) || !is_numeric($status)) {
-    echo json_encode([
-      'status' => 0,
-      'message' => 'Data tidak valid'
-    ]);
-    return;
-  }
-
-  $old_ticket = $this->Ticket_model->get_ticket_by_id($id);
-  if (!$old_ticket) {
-    echo json_encode([
-      'status' => 0,
-      'message' => 'Ticket tidak ditemukan'
-    ]);
-    return;
-  }
-
-  $statusText = [
-    0 => 'Open',
-    1 => 'Process',
-    2 => 'Pending',
-    3 => 'Cancel',
-    4 => 'Done',
-    5 => 'Close',
-    6 => 'Revisi'
-  ];
-
-  $statusName = $statusText[$status] ?? 'Unknown';
-
-  $data = [
-    'status'       => $status,
-    'update_date'  => date('Y-m-d H:i:s'),
-    'update_by'    => $this->auth->user_id(),
-    'update_by_id' => $this->auth->user_id()
-  ];
-
-  // cancel reason
-  if ($status == 3 && $this->input->post('cancel_reason')) {
-    $data['cancel_reason'] = $this->input->post('cancel_reason');
-  }
-
-  // 🔥 RESET APPROVAL (HANYA INI)
-  if ((int)$status === 1 && (int)$old_ticket->is_approve === 2) {
-    $data['is_approve']         = 0;
-    $data['approval_reason']   = null;
-    $data['approval_2_reason'] = null;
-  }
-
-  $result = $this->Ticket_model->update_ticket_status($id, $data);
-
-  $description = 'Status diubah menjadi ' . $statusName;
-
-  if ((int)$status === 4) {
-    $description .= ' dan menunggu approval';
-  }
-
-  if ($result) {
-
-    $this->Ticket_model->save_history([
-      'helpdesk_id'  => $id,
-      'no_ticket'    => $old_ticket->no_ticket,
-      'action_type'  => 1,
-      'old_status'   => $old_ticket->status,
-      'new_status'   => $status,
-      'description'  => $description,
-      'cause_pic'    => $this->input->post('cancel_reason') ?: null,
-      'action_by'    => $this->auth->nama(),
-      'action_by_id' => $this->auth->user_id(),
-      'action_date'  => date('Y-m-d H:i:s')
-    ]);
-
-    echo json_encode([
-      'status' => 1,
-      'message' => "Status ticket berhasil diubah menjadi {$statusName}"
-    ]);
-  } else {
-    echo json_encode([
-      'status' => 0,
-      'message' => 'Gagal mengubah status ticket'
-    ]);
-  }
-}
 
 
   public function get_ticket_details($id)
