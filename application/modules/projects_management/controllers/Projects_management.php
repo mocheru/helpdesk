@@ -31,6 +31,11 @@ class Projects_management extends Admin_Controller
 
         $data['kpi']          = $this->Project_model->get_kpi_summary();
         $data['projects']     = $this->Project_model->get_projects(null, null, null);
+        $data['current_user_id'] = $this->id_user;
+        $data['is_admin']       = $this->auth->is_admin();
+
+        // Get all project_ids where current user is involved (for button visibility)
+        $data['user_project_ids'] = $this->Project_model->get_user_involved_project_ids($this->id_user);
 
         $this->template->set($data);
         $this->template->render('dashboard');
@@ -55,7 +60,7 @@ class Projects_management extends Admin_Controller
     }
 
     /**
-     * Edit project header (hanya status Planning)
+     * Edit project header (status Planning atau In Progress)
      */
     public function edit($id)
     {
@@ -65,7 +70,7 @@ class Projects_management extends Admin_Controller
             return;
         }
 
-        if ($project['status'] !== 'Planning') {
+        if (!in_array($project['status'], array('Planning', 'In Progress'))) {
             redirect('projects_management/master');
             return;
         }
@@ -109,10 +114,10 @@ class Projects_management extends Admin_Controller
             return;
         }
 
-        // Verify project is still Planning
+        // Verify project is Planning or In Progress
         $project = $this->Project_model->get_project_by_id($project_id);
-        if (!$project || $project['status'] !== 'Planning') {
-            echo json_encode(array('status' => 0, 'pesan' => 'Hanya project dengan status Planning yang bisa diedit.'));
+        if (!$project || !in_array($project['status'], array('Planning', 'In Progress'))) {
+            echo json_encode(array('status' => 0, 'pesan' => 'Hanya project dengan status Planning atau In Progress yang bisa diedit.'));
             return;
         }
 

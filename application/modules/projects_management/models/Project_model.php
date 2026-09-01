@@ -167,4 +167,39 @@ class Project_model extends BF_Model
             'delay' => $delay
         );
     }
+
+    /**
+     * Get all project IDs where user is involved (as PM, member, or has role)
+     */
+    public function get_user_involved_project_ids($user_id)
+    {
+        $user_id = (int)$user_id;
+
+        // Projects where user is PM
+        $pm_projects = $this->db->select('id')
+            ->where('pm_id', $user_id)
+            ->where('deleted', 0)
+            ->get('pm_projects')
+            ->result_array();
+
+        // Projects where user has role (ba, programmer, qa, pm)
+        $role_projects = $this->db->select('project_id as id')
+            ->where('user_id', $user_id)
+            ->get('pm_project_roles')
+            ->result_array();
+
+        // Projects where user is member
+        $member_projects = $this->db->select('project_id as id')
+            ->where('user_id', $user_id)
+            ->get('pm_project_members')
+            ->result_array();
+
+        // Merge and unique
+        $ids = array();
+        foreach ($pm_projects as $row) $ids[] = (int)$row['id'];
+        foreach ($role_projects as $row) $ids[] = (int)$row['id'];
+        foreach ($member_projects as $row) $ids[] = (int)$row['id'];
+
+        return array_unique($ids);
+    }
 }

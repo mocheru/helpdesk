@@ -139,7 +139,7 @@
                                                     <span class="action-label">Isi Task</span>
                                                 </a>
                                             <?php endif; ?>
-                                            <?php if ($p['status'] === 'Planning' && $is_project_pm): ?>
+                                            <?php if (in_array($p['status'], array('Planning', 'In Progress')) && $is_project_pm): ?>
                                                 <a class="action-popover-item" href="<?= site_url('projects_management/edit/' . $p['id']); ?>" title="Edit Data">
                                                     <span class="action-icon bg-secondary text-white"><i class="fa fa-cog"></i></span>
                                                     <span class="action-label">Edit</span>

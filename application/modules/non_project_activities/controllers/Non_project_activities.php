@@ -290,12 +290,34 @@ class Non_project_activities extends Admin_Controller
             }
         }
 
-        // Ownership check on first existing record
-        if (!empty($existing_ids[0])) {
-            $check = $this->Activity_model->get_activity_by_id($existing_ids[0]);
+        // Ownership check on first existing record (via reference_id for reliability)
+        $owner_id = null;
+        $original_date = null;
+        $ref_check_id = !empty($reference_id) ? $reference_id : (!empty($existing_ids[0]) ? $existing_ids[0] : null);
+        if (!empty($ref_check_id)) {
+            $check = $this->Activity_model->get_activity_by_id($ref_check_id);
             if (!$check || (!$this->auth->is_admin() && $check['user_id'] != $this->id_user)) {
                 show_404();
                 return;
+            }
+            $owner_id      = $check['user_id'];
+            $original_date = $check['activity_date'];
+        }
+
+        // Collect submitted existing IDs (rows still present in the form)
+        $submitted_ids = array();
+        foreach ($existing_ids as $eid) {
+            if (!empty($eid)) $submitted_ids[] = (int)$eid;
+        }
+
+        // Soft-delete records that existed on the original date but are no longer
+        // submitted (user removed those rows in the UI)
+        if ($owner_id !== null && $original_date !== null) {
+            $existing_records = $this->Activity_model->get_activities_by_date($owner_id, $original_date);
+            foreach ($existing_records as $rec) {
+                if (!in_array((int)$rec['id'], $submitted_ids)) {
+                    $this->Activity_model->delete_activity($rec['id']);
+                }
             }
         }
 

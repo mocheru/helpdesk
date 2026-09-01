@@ -275,18 +275,18 @@
     }
 
     .role-mh .mh-bar-plan-value {
-        position: absolute;
-        left: 6px;
+        position: relative;
+        z-index: 1;
+        margin-left: auto;
+        padding-right: 6px;
         font-size: 11px;
         font-weight: 600;
         color: #6a2e00ff;
     }
 
     .role-mh .mh-bar-actual-value {
-        position: relative;
-        z-index: 1;
-        margin-left: auto;
-        padding-right: 6px;
+        position: absolute;
+        left: 6px;
         font-size: 11px;
         font-weight: 600;
         color: #b45309;
@@ -454,6 +454,8 @@
                     $total_actual_mh_project += (float)$t_calc['actual_manhour'];
                 }
             }
+            // Include manhour Others/Meeting ke dalam aktual (masih tahap development)
+            $total_actual_mh_project += (float)(isset($m_calc['meeting_manhour']) ? $m_calc['meeting_manhour'] : 0);
         }
         $total_selisih_mh_project = $total_actual_mh_project - $total_plan_mh_project;
         $mh_over = $total_selisih_mh_project > 0;
@@ -517,12 +519,12 @@
             </div>
             <div class="info-stat-card role-mh">
                 <div class="mh-top-row">
-                    <span class="mh-side-label">Plan</span>
+                    <span class="mh-side-label">Aktual</span>
                     <span class="mh-title-block">
                         <span class="info-stat-icon" style="background:#fef3e2; color:#d97706;"><i class="fa fa-hourglass-half"></i></span>
                         <span class="mh-title-text">Manhour project</span>
                     </span>
-                    <span class="mh-side-label">Aktual</span>
+                    <span class="mh-side-label">Plan</span>
                 </div>
                 <div class="mh-bar <?= $is_completed ? 'mh-bar-static' : ''; ?>">
                     <div class="mh-bar-actual-fill" data-target-width="<?= $mh_actual_pct_bar; ?>"></div>
@@ -669,6 +671,8 @@
                                         $actual_mh_1_10 += (float)$_t['actual_manhour'];
                                     }
                                 }
+                                // Include manhour Others/Meeting ke dalam aktual (masih tahap development)
+                                $actual_mh_1_10 += (float)(isset($mod['meeting_manhour']) ? $mod['meeting_manhour'] : 0);
                                 $selisih_mh_1_10 = $actual_mh_1_10 - $plan_mh_1_10;
                                 // Selisih positif (aktual > plan) = over budget -> merah
                                 // Selisih negatif/nol (aktual <= plan) = aman -> hijau
